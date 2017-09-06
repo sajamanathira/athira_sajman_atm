@@ -1,0 +1,53 @@
+000100 IDENTIFICATION DIVISION.                                         00010000
+000200 PROGRAM-ID. P37AP01.                                             00020000
+000300 DATA DIVISION.                                                   00030000
+000400 WORKING-STORAGE SECTION.                                         00040000
+000500 01  WS-CA.                                                       00050000
+000600     03  CA-SEND       PIC X(01) VALUE '1'.                       00060000
+000700     03  FILLER        PIC X(39) VALUE SPACES.                    00070000
+000800 01  WS-MESSAGE        PIC X(30) VALUE                            00080000
+000900     'END OF PROGRAM, BYE,BYE!!'.                                 00090000
+001000      COPY P37AS01.                                               00100000
+001100      COPY DFHAID.                                                00110000
+001200 LINKAGE SECTION.                                                 00120000
+001300 01  DFHCOMMAREA   PIC X(40).                                     00130000
+001400 PROCEDURE DIVISION.                                              00140000
+001500 MAIN-PARA.                                                       00150000
+001600      IF EIBCALEN = ZERO                                          00160000
+001700         MOVE LOW-VALUES TO BMSHOMO                               00170000
+001800         PERFORM SEND-PARA                                        00180000
+001900      ELSE                                                        00190000
+002000         MOVE DFHCOMMAREA TO WS-CA                                00200000
+002100         PERFORM RESPONSE-PARA                                    00210000
+002200      END-IF.                                                     00220000
+002300 END-PARA.                                                        00230000
+002400      EXEC CICS RETURN                                            00240000
+002500          TRANSID('P37A')                                         00250000
+002600          COMMAREA(WS-CA)                                         00260000
+002700      END-EXEC.                                                   00270000
+002800 SEND-PARA.                                                       00280000
+002900      EXEC CICS SEND                                              00290000
+003000          MAP('BMSHOM')                                           00300000
+003100          MAPSET('P37AS01')                                       00310000
+003200          FROM(BMSHOMO)                                           00320000
+003300          ERASE                                                   00330000
+003400      END-EXEC.                                                   00340000
+003500 RESPONSE-PARA.                                                   00350000
+003600      EVALUATE EIBAID                                             00360000
+003700      WHEN DFHPF1                                                 00370000
+003800          EXEC CICS SEND TEXT                                     00380000
+003900              FROM(WS-MESSAGE)                                    00390000
+004000              ERASE                                               00400000
+004100          END-EXEC                                                00410000
+004200          EXEC CICS RETURN                                        00420000
+004300          END-EXEC                                                00430000
+004400      WHEN DFHENTER                                               00440000
+004500      MOVE '2' TO CA-SEND                                         00450000
+004600          EXEC CICS XCTL                                          00460000
+004700              PROGRAM('P37AP02')                                  00470000
+004800              COMMAREA(WS-CA)                                     00480000
+004900          END-EXEC                                                00490000
+005000      WHEN OTHER                                                  00500000
+005100          MOVE 'INVALID KEY PRESSED' TO MSGHO                     00510000
+005200          PERFORM SEND-PARA                                       00520000
+005300      END-EVALUATE.                                               00530000
